@@ -1,0 +1,147 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unrender"
+# Fixed packaging metadata; source commits identify changes.
+version = "0.0.0"
+description = "Reconstruct editable shots, scenes, dialogue, audio layers and timelines from video."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "opencv-python>=4.8",
+    "Pillow>=10",
+    "requests>=2.31",
+    "scikit-learn>=1.3",
+    "scipy>=1.10",
+    "soundfile",
+]
+
+[project.optional-dependencies]
+face = [
+    "insightface",
+    "onnxruntime",
+]
+voice = [
+    "pyannote.audio>=3.1,<4",
+    "soundfile",
+    "speechbrain",
+    "torch==2.8.0",
+    "torchaudio==2.8.0",
+]
+# Bandwidth-extension restorers used by the standalone audio restoration
+# experiments: FlashSR needs onnxruntime, RE-USE needs a Hub download.
+flashsr = [
+    "huggingface-hub",
+    "onnxruntime>=1.17",
+]
+transcription = [
+    # WhisperX 3.8 is the pyannote.audio 4 line. Install this extra in its own
+    # environment and select it with UNRENDER_TRANSCRIPTION_PYTHON.
+    "pyannote.audio>=4,<5",
+    "soundfile",
+    # Only `voice` needs the pre-2.9 torchaudio API, via pyannote 3.1. Pinning
+    # it here too made the extra uninstallable on aarch64 CUDA hosts, which have
+    # no 2.8 wheel, so this tracks the floor rather than an exact version.
+    "torch>=2.8",
+    "torchaudio>=2.8",
+    "whisperx>=3.8.5,<3.9",
+]
+scripts = [
+    "openpyxl",
+    "python-docx",
+]
+detect = [
+    "scenedetect>=0.6.3",
+]
+scenes = [
+    "torch>=2.4",
+    "torchvision",
+    "transformers>=4.49",
+]
+timeline = [
+    "opentimelineio>=0.17",
+]
+# CLAP zero-shot FX sub-classification. AudioShake-based music denoise and
+# instrument stems reuse the core `requests` dependency, so only the local CLAP
+# tagger needs extra packages.
+mne = [
+    "torch>=2.4",
+    "transformers>=4.49",
+]
+audio-analysis = [
+    "librosa>=0.11",
+    "pyloudnorm>=0.2",
+]
+audio-models = [
+    "beat-this>=1.1",
+    "librosa>=0.11",
+    "pyannote.audio",
+    "torch>=2.4",
+    "transformers>=4.49",
+    "whisperx",
+]
+dev = [
+    "black>=24.0",
+    "mypy>=1.8",
+    "opentimelineio>=0.17",
+    "pre-commit>=3.5",
+    "pytest>=7.4",
+    "ruff>=0.4",
+    "soundfile",
+]
+
+[project.scripts]
+unrender = "unrender.cli:main"
+
+[project.urls]
+Repository = "https://github.com/mhadifilms/unrender"
+Issues = "https://github.com/mhadifilms/unrender/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+unrender = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
+# SIM108 rewrites readable if/else blocks into long ternaries; keep explicit form.
+ignore = ["SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/unrender"]
+ignore_missing_imports = true
+warn_unused_ignores = false
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+# Third-party packages ship stubs that require a newer target than our floor,
+# or ship no stubs at all; treat them as untyped rather than parsing them.
+[[tool.mypy.overrides]]
+module = ["numpy.*", "cv2.*", "sklearn.*", "scipy.*", "PIL.*", "requests.*", "opentimelineio.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

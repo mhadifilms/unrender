@@ -1,0 +1,29 @@
+.DS_Store
+._*
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+.worktrees/
+
+# Model downloads and local ML checkpoints.
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Local pipeline runs can include media, embeddings, and review samples.
+runs/
+_data/
+config/
+
+# Local secrets (AudioShake, HF token, etc). Never commit.
+.env
+.env.*
+!.env.example
